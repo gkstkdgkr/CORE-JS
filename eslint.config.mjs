@@ -8,7 +8,8 @@ export default [
     languageOptions: { 
       globals: {
         ...globals.browser, 
-        ...globals.node
+        ...globals.node,
+
       } 
     },
     
@@ -16,5 +17,4 @@ export default [
       "no-unused-vars":'warn'
     },
   },
-
 ];
