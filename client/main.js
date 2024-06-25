@@ -1,56 +1,67 @@
-import data from './data/data';
 import {
-  clearContents,
-  copy,
-  getNode,
-  getRandom,
+  getNodes,
+  diceAnimation,
+  attr,
   insertLast,
-  isNumericString,
-  showAlert,
-} from './lib/index';
+  endScroll,
+} from './lib/index.js';
 
-console.log(data);
+// 1. 주사위 애니메이션
+// 2. 주사위 굴리기 버튼을 클릭하면 diceAnimation() 실행될 수 있도록
 
-const submit = getNode('#submit');
-const nameField = getNode('#nameField');
-const result = getNode('.result');
+const [rollingButton, recordButton, resetButton] = getNodes(
+  '.buttonGroup > button'
+);
+const recordListWrapper = getNodes('.recordListWrapper');
 
-function handleSubmit(e) {
-  e.preventDefault();
+const handleRollingDice = (() => {
+  let isClicked = false;
+  let stopAnimation;
 
-  const name = nameField.value;
-  const list = data(name);
-  const pick = list[getRandom(list.length)];
+  return () => {
+    if (!isClicked) {
+      stopAnimation = setInterval(diceAnimation, 100);
+      recordButton.disabled = true;
+      resetButton.disabled = true;
+    } else {
+      clearInterval(stopAnimation);
+      recordButton.disabled = false;
+      resetButton.disabled = false;
+    }
+    isClicked = !isClicked;
+  };
+})();
 
-  if (!name || name.replace(/\s*/g, '') === '') {
-    showAlert('.alert-error', '공백은 허용하지 않습니다.');
-
-    return;
-  }
-  if (typeof name === 'number') {
-    console.log('?');
-
-    showAlert('.alert-error', '제대로 된 이름을 입력해 주세요');
-    return;
-  }
-
-  if (!isNumericString(name)) {
-    showAlert('.alert-error', '제대로 된 이름을 입력해 주세요');
-    return;
-  }
-
-  clearContents(result);
-  insertLast(result, pick);
-}
-function handleCopy() {
-  const text = result.textContent;
-
-  if (nameField.value) {
-    copy(text).then(() => {
-      showAlert('.alert-success', '클립보드 복사 완료!');
-    });
-  }
+let count = 0;
+let total = 0;
+function createItem(value) {
+  const template = `
+  <tr>
+    <td>${count}</td>
+    <td>${value}</td>
+    <td>${(total += value)}</td>
+  </tr>
+`;
+  return template;
 }
 
-submit.addEventListener('click', handleSubmit);
-result.addEventListener('click', handleCopy);
+function renderRecordItems() {
+  const diceValue = Number(attr(getNodes('#cube'), 'dice'));
+
+  insertLast('.recordList tbody', createItem(diceValue));
+
+  endScroll(recordListWrapper);
+}
+
+function handleRecord() {
+  recordListWrapper.hidden = false;
+
+  renderRecordItems();
+}
+function handleReset() {
+  recordListWrapper.hidden = true;
+}
+
+rollingButton.addEventListener('click', handleRollingDice);
+recordButton.addEventListener('click', handleRecord);
+resetButton.addEventListener('click', handleReset);
